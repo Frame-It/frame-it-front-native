@@ -5,7 +5,7 @@ export default {
     version: '1.0.0',
     orientation: 'portrait',
     icon: './assets/images/icon.png',
-    scheme: 'myapp',
+    scheme: 'frameit',
     userInterfaceStyle: 'automatic',
     newArchEnabled: true,
     ios: {
@@ -39,6 +39,7 @@ export default {
     },
     extra: {
       webviewUrl: process.env.WEBVIEW_URL,
+      apiUrl: process.env.API_URL,
     },
   },
 };
