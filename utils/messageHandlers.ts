@@ -1,10 +1,13 @@
+import { sendCodeToBackend } from '@/service/auth-service';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Alert, Linking } from 'react-native';
 
-type TMessage =
+import { Alert, Linking } from 'react-native';
+export type TMessage =
   | { type: 'OPEN_IN_APP_BROWSER'; payload: { url: string } }
   | { type: 'SAVE_TOKEN'; payload: { token: string } }
-  | { type: 'TOKEN_EXPIRED' };
+  | { type: 'AUTH_CODE'; payload: { code: string } }
+  | { type: 'TOKEN_EXPIRED' }
+  | { type: 'READY' };
 
 // 인앱 브라우저 열기
 export const openInAppBrowser = (url: string) => {
@@ -31,26 +34,31 @@ export const tokenExpired = async () => {
   // TODO: refresh token 처리
 };
 
-// 메시지 핸들러 (메시지 타입에 따른 처리)
-export const handleWebViewMessage = async (data: TMessage) => {
+interface AuthMessage {
+  type: string;
+  payload: {
+    code: string;
+    state?: string;
+  };
+}
+
+export const login = async (payload: AuthMessage['payload']) => {
   try {
-    switch (data.type) {
-      case 'OPEN_IN_APP_BROWSER':
-        openInAppBrowser(data.payload.url);
-        break;
+    if (payload.code && payload.state) {
+      const authCode = payload.code;
+      const state = payload.state;
 
-      case 'SAVE_TOKEN':
-        await saveToken(data.payload.token);
-        break;
+      try {
+        const resData = await sendCodeToBackend(authCode, state);
 
-      case 'TOKEN_EXPIRED':
-        await tokenExpired();
-        break;
-
-      default:
-        console.warn('알 수 없는 메시지 타입');
+        await AsyncStorage.setItem('refreshToken', resData.refreshToken);
+        return resData;
+      } catch (error) {
+        console.error('인증 중 에러:', error);
+        Alert.alert('로그인 오류', '서버와 통신 중 문제가 발생했습니다.');
+      }
     }
   } catch (error) {
-    console.error('메시지 파싱 오류:', error);
+    console.error('Error parsing incoming message:', error);
   }
 };
