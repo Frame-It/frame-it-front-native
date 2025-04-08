@@ -1,20 +1,43 @@
-import { handleWebViewMessage } from '@/utils/messageHandlers';
+import { useMessageHandlers } from '@/hooks/useMessageHandlers';
 import Constants from 'expo-constants';
+import { useEffect, useRef } from 'react';
 import { SafeAreaView, StyleSheet } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 
 export default function HomeScreen() {
+  const webViewUrl = Constants.expoConfig?.extra?.webviewUrl;
+  const webviewRef = useRef<WebView>(null);
+
+  const { handleWebViewMessage, isWebReady, authData, setAuthData } =
+    useMessageHandlers();
   const handleMessage = async (event: WebViewMessageEvent) => {
     const data = JSON.parse(event.nativeEvent.data);
     await handleWebViewMessage(data);
   };
-  const webViewUrl = Constants.expoConfig?.extra?.webviewUrl;
+
+  useEffect(() => {
+    if (isWebReady && authData && webviewRef.current) {
+      const jsCode = `
+      (async function () {
+        if (typeof window.receiveAuthData === 'function') {
+          await window.receiveAuthData(${JSON.stringify(authData)});
+        } else {
+          alert('window.receiveAuthData is not defined');
+        }
+      })();
+      true;
+    `;
+      webviewRef.current.injectJavaScript(jsCode);
+      setAuthData(null);
+    }
+  }, [authData, isWebReady, webviewRef]);
 
   if (!webViewUrl) return;
 
   return (
     <SafeAreaView style={styles.webviewContainer}>
       <WebView
+        ref={webviewRef}
         source={{ uri: webViewUrl }}
         style={styles.webview}
         onMessage={handleMessage}
