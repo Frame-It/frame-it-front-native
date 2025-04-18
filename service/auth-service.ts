@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 
 export const sendCodeToBackend = async (
@@ -14,6 +15,37 @@ export const sendCodeToBackend = async (
     );
     if (!response.ok) {
       const errorData = await response.json();
+      throw new Error(
+        `서버 오류: ${response.status}, ${JSON.stringify(errorData)}`
+      );
+    }
+
+    return response.json();
+  } catch (e) {
+    console.log(e);
+  }
+};
+
+export const sendRefreshTokenToBackend = async (
+  refreshToken: string
+): Promise<any> => {
+  try {
+    const response = await fetch(
+      `${Constants.expoConfig?.extra?.apiUrl}/tokens/refresh`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          refreshToken,
+        }),
+      }
+    );
+    if (!response.ok) {
+      const errorData = await response.json();
+      AsyncStorage.removeItem('refreshToken');
+
       throw new Error(
         `서버 오류: ${response.status}, ${JSON.stringify(errorData)}`
       );
