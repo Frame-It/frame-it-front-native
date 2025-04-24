@@ -6,7 +6,8 @@ export type TMessage =
   | { type: 'OPEN_IN_APP_BROWSER'; payload: { url: string } }
   | { type: 'SAVE_TOKEN'; payload: { token: string } }
   | { type: 'AUTH_CODE'; payload: { code: string } }
-  | { type: 'TOKEN_EXPIRED' }
+  | { type: 'ACCESS_TOKEN_EXPIRED' }
+  | { type: 'REFRESH_TOKEN_EXPIRED' }
   | { type: 'READY' };
 
 // 인앱 브라우저 열기
@@ -27,13 +28,6 @@ export const saveToken = async (token: string) => {
   }
 };
 
-// 토큰 만료 처리
-export const tokenExpired = async () => {
-  await AsyncStorage.removeItem('accessToken');
-  Alert.alert('알림', '로그인이 만료되었습니다. 다시 로그인해주세요.');
-  // TODO: refresh token 처리
-};
-
 interface AuthMessage {
   type: string;
   payload: {
@@ -50,8 +44,10 @@ export const login = async (payload: AuthMessage['payload']) => {
 
       try {
         const resData = await sendCodeToBackend(authCode, state);
-
+        // console.log('resData', resData);
+        await AsyncStorage.setItem('accessToken', resData.accessToken);
         await AsyncStorage.setItem('refreshToken', resData.refreshToken);
+
         return resData;
       } catch (error) {
         console.error('인증 중 에러:', error);

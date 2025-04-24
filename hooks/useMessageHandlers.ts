@@ -1,16 +1,16 @@
+import { getAccessToken } from '@/utils/login';
 import {
   login,
   openInAppBrowser,
   saveToken,
   TMessage,
-  tokenExpired,
 } from '@/utils/messageHandlers';
 import { useState } from 'react';
 
 export const useMessageHandlers = () => {
   const [isWebReady, setIsWebReady] = useState(false);
   const [authData, setAuthData] = useState<any>(null);
-
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const handleWebViewMessage = async (data: TMessage) => {
     try {
       switch (data.type) {
@@ -22,8 +22,10 @@ export const useMessageHandlers = () => {
           await saveToken(data.payload.token);
           break;
 
-        case 'TOKEN_EXPIRED':
-          await tokenExpired();
+        case 'ACCESS_TOKEN_EXPIRED':
+          const accessToken = await getAccessToken();
+          // console.log('ACCESS_TOKEN_EXPIRED', 'accessToken', accessToken);
+          setAccessToken(accessToken);
           break;
 
         case 'AUTH_CODE':
@@ -43,5 +45,12 @@ export const useMessageHandlers = () => {
     }
   };
 
-  return { handleWebViewMessage, isWebReady, authData, setAuthData };
+  return {
+    handleWebViewMessage,
+    isWebReady,
+    authData,
+    setAuthData,
+    accessToken,
+    setAccessToken,
+  };
 };

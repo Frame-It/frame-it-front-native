@@ -5,42 +5,72 @@ import { SafeAreaView, StyleSheet } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 
 export default function HomeScreen() {
-  const webViewUrl = Constants.expoConfig?.extra?.webviewUrl;
+  const webViewBaseUrl = Constants.expoConfig?.extra?.webviewUrl;
   const webviewRef = useRef<WebView>(null);
 
-  const { handleWebViewMessage, isWebReady, authData, setAuthData } =
-    useMessageHandlers();
+  const {
+    handleWebViewMessage,
+    isWebReady,
+    authData,
+    setAuthData,
+    accessToken,
+    setAccessToken,
+  } = useMessageHandlers();
   const handleMessage = async (event: WebViewMessageEvent) => {
     const data = JSON.parse(event.nativeEvent.data);
     await handleWebViewMessage(data);
   };
 
-  useEffect(() => {
-    if (isWebReady && authData && webviewRef.current) {
-      const jsCode = `
-      (async function () {
-        if (typeof window.receiveAuthData === 'function') {
-          await window.receiveAuthData(${JSON.stringify(authData)});
-        } else {
-          alert('window.receiveAuthData is not defined');
-        }
-      })();
-      true;
-    `;
-      webviewRef.current.injectJavaScript(jsCode);
-      setAuthData(null);
-    }
-  }, [authData, isWebReady, webviewRef]);
+  useEffect(
+    function refreshAccessToken() {
+      if (isWebReady && accessToken && webviewRef.current) {
+        const jsCode = `
+          (async function () {
+            if (typeof window.refreshAccessToken === 'function') {
+              await window.refreshAccessToken('${accessToken}');
+            } else {
+              alert('window.refreshAccessToken is not defined');
+            }
+          })();
+          true;
+        `;
+        webviewRef.current.injectJavaScript(jsCode);
+        setAccessToken(null);
+      }
+    },
+    [accessToken, webviewRef, isWebReady]
+  );
 
-  if (!webViewUrl) return;
+  useEffect(
+    function login() {
+      if (isWebReady && authData && webviewRef.current) {
+        const jsCode = `
+          (async function () {
+            if (typeof window.receiveAuthData === 'function') {
+              await window.receiveAuthData(${JSON.stringify(authData)});
+            } else {
+              alert('window.receiveAuthData is not defined');
+            }
+          })();
+          true;
+        `;
+        webviewRef.current.injectJavaScript(jsCode);
+        setAuthData(null);
+      }
+    },
+    [authData, isWebReady, webviewRef]
+  );
+
+  if (!webViewBaseUrl) return;
 
   return (
     <SafeAreaView style={styles.webviewContainer}>
       <WebView
         ref={webviewRef}
-        source={{ uri: webViewUrl }}
+        source={{ uri: webViewBaseUrl }}
         style={styles.webview}
         onMessage={handleMessage}
+        userAgent={'FrameItWebView'}
       />
     </SafeAreaView>
   );
