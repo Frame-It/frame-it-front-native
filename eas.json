@@ -1,0 +1,29 @@
+{
+  "cli": {
+    "version": ">= 15.0.10",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "WEBVIEW_URL": "https://www.frameit.kr",
+        "API_URL": "https://api.frameit.kr"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "WEBVIEW_URL": "https://www.frameit.kr",
+        "API_URL": "https://api.frameit.kr"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
