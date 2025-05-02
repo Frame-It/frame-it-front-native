@@ -11,6 +11,8 @@ export const getAccessToken = async () => {
     await AsyncStorage.setItem('refreshToken', resData.refreshToken);
 
     return resData.accessToken;
+  } else {
+    throw new Error(`there's no refresh token`);
   }
 };
 
