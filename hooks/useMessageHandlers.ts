@@ -11,6 +11,8 @@ export const useMessageHandlers = () => {
   const [isWebReady, setIsWebReady] = useState(false);
   const [authData, setAuthData] = useState<any>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [path, setPath] = useState('/');
+
   const handleWebViewMessage = async (data: TMessage) => {
     try {
       switch (data.type) {
@@ -23,11 +25,15 @@ export const useMessageHandlers = () => {
           break;
 
         case 'ACCESS_TOKEN_EXPIRED':
-          const accessToken = await getAccessToken();
-          // console.log('ACCESS_TOKEN_EXPIRED', 'accessToken', accessToken);
-          setAccessToken(accessToken);
+          try {
+            const accessToken = await getAccessToken();
+            // console.log('ACCESS_TOKEN_EXPIRED', 'accessToken', accessToken);
+            setAccessToken(accessToken);
+          } catch (e) {
+            // TODO: 로그인 페이지로 이동
+            setPath('/login');
+          }
           break;
-
         case 'AUTH_CODE':
           const loginData = await login(data.payload);
           setAuthData(loginData);
@@ -52,5 +58,6 @@ export const useMessageHandlers = () => {
     setAuthData,
     accessToken,
     setAccessToken,
+    path,
   };
 };

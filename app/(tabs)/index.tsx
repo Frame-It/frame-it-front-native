@@ -1,12 +1,15 @@
+import { useAndroidWebViewBackHandler } from '@/hooks/useAndroidWebViewBackHandler';
 import { useMessageHandlers } from '@/hooks/useMessageHandlers';
 import Constants from 'expo-constants';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { SafeAreaView, StyleSheet } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 
 export default function HomeScreen() {
   const webViewBaseUrl = Constants.expoConfig?.extra?.webviewUrl;
   const webviewRef = useRef<WebView>(null);
+  const [canGoBack, setCanGoBack] = useState(false);
+  useAndroidWebViewBackHandler(webviewRef, canGoBack);
 
   const {
     handleWebViewMessage,
@@ -15,6 +18,7 @@ export default function HomeScreen() {
     setAuthData,
     accessToken,
     setAccessToken,
+    path,
   } = useMessageHandlers();
   const handleMessage = async (event: WebViewMessageEvent) => {
     const data = JSON.parse(event.nativeEvent.data);
@@ -67,10 +71,14 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.webviewContainer}>
       <WebView
         ref={webviewRef}
-        source={{ uri: webViewBaseUrl }}
+        source={{ uri: `${webViewBaseUrl}${path}` }}
         style={styles.webview}
         onMessage={handleMessage}
         userAgent={'FrameItWebView'}
+        mixedContentMode={'always'}
+        onNavigationStateChange={(navState) => {
+          setCanGoBack(navState.canGoBack);
+        }}
       />
     </SafeAreaView>
   );
